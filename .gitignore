@@ -3,3 +3,6 @@
 
 # Modules & Packages
 vendor/
+
+# Executables
+url-shortener
