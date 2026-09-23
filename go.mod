@@ -2,7 +2,10 @@ module github.com/TheAliRh/url-shortener
 
 go 1.26.0
 
-require github.com/gin-gonic/gin v1.12.0
+require (
+	github.com/gin-gonic/gin v1.12.0
+	github.com/joho/godotenv v1.5.1
+)
 
 require (
 	github.com/bytedance/gopkg v0.1.4 // indirect
