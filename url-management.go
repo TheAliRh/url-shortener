@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 )
 
 func createShortURL(longURL string) string {
@@ -13,6 +14,20 @@ func createShortURL(longURL string) string {
 	shortURL := host + "/" + generateRandomCode(7)
 
 	log.Printf("Short URL created: %s for long URL: %s\n", shortURL, longURL)
+
+	url := URL{
+		ID:        0, // ID will be auto-incremented by the database
+		ShortURL:  shortURL,
+		LongURL:   longURL,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// Add the short URL and long URL to the database
+	err := addOneToDatabase(url, "urls")
+	if err != nil {
+		log.Printf("Error adding URL to database: %v\n", err)
+	}
 
 	return shortURL
 }
