@@ -64,10 +64,38 @@ func addManyToDatabase(shortURLs []string, newLongURLs []string) error {
 	return nil
 }
 
-func getOneFromDatabase(shortURL string) (string, error) {
-	// Implementation for retrieving the long URL from the database using the short URL
-	// This is a placeholder for actual database interaction code
-	return "", nil
+func getOneFromDatabase(tableName string, qry string, document any) (doc any, err error) {
+
+	query := "SELECT * FROM " + tableName + " WHERE " + qry + " LIMIT 1"
+
+	row := dbPool.QueryRow(context.Background(), query)
+
+	value := reflect.ValueOf(document)
+	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
+
+		log.Fatal("Error: document must be a pointer to a struct:")
+		return nil, err
+
+	}
+
+	value = value.Elem()
+
+	scanValues := make([]any, value.NumField())
+	for i := 0; i < value.NumField(); i++ {
+		scanValues[i] = value.Field(i).Addr().Interface()
+	}
+
+	err = row.Scan(scanValues...)
+	if err != nil {
+		log.Printf("Error scanning row: %v\n", err)
+		return nil, err
+	}
+
+	log.Printf("Successfully retrieved document from %s table\n", tableName)
+
+	doc = document
+
+	return doc, nil
 }
 
 func getManyFromDatabase(shortURLs []string) (map[string]string, error) {
