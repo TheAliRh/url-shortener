@@ -122,10 +122,16 @@ func updateManyInDatabase(shortURLs []string, newLongURLs []string) error {
 	return nil
 }
 
-func deleteOneFromDatabase(shortURL string) error {
-	// Implementation for deleting the short URL and its associated long URL from the database
-	// This is a placeholder for actual database interaction code
-	return nil
+func deleteOneFromDatabase(doc string, tableName string) (string, error) {
+
+	query := "DELETE FROM " + tableName + " WHERE " + doc
+
+	_, err := dbPool.Exec(context.Background(), query)
+	if err != nil {
+		return "", err
+	}
+
+	return "1", nil
 }
 
 func deleteManyFromDatabase(shortURLs []string) error {
