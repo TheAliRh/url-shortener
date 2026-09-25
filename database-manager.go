@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func addOneToDatabase(document any, tableName string) error { // Add one document to the database
@@ -104,10 +106,16 @@ func getManyFromDatabase(shortURLs []string) (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
-func getAllFromDatabase() ([]string, error) {
-	// Implementation for retrieving all shortened URLs from the database
-	// This is a placeholder for actual database interaction code
-	return []string{}, nil
+func getAllFromDatabase(tableName string) (pgx.Rows, error) {
+
+	query := "SELECT * FROM " + tableName
+
+	docs, err := dbPool.Query(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+
+	return docs, nil
 }
 
 func updateOneInDatabase(shortURL, newLongURL string) error {
