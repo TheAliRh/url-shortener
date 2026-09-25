@@ -66,7 +66,7 @@ func addManyToDatabase(shortURLs []string, newLongURLs []string) error {
 	return nil
 }
 
-func getOneFromDatabase(tableName string, qry string, document any) (doc any, err error) {
+func getOneFromDatabase(tableName string, qry string, document any) (doc any, err error) { // Get a document from database table
 
 	query := "SELECT * FROM " + tableName + " WHERE " + qry + " LIMIT 1"
 
@@ -106,7 +106,7 @@ func getManyFromDatabase(shortURLs []string) (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
-func getAllFromDatabase(tableName string) (pgx.Rows, error) {
+func getAllFromDatabase(tableName string) (pgx.Rows, error) { // Get all of the database table's documents
 
 	query := "SELECT * FROM " + tableName
 
@@ -130,7 +130,7 @@ func updateManyInDatabase(shortURLs []string, newLongURLs []string) error {
 	return nil
 }
 
-func deleteOneFromDatabase(doc string, tableName string) (string, error) {
+func deleteOneFromDatabase(doc string, tableName string) (string, error) { // Delete a document from database table
 
 	query := "DELETE FROM " + tableName + " WHERE " + doc
 
@@ -142,8 +142,14 @@ func deleteOneFromDatabase(doc string, tableName string) (string, error) {
 	return "1", nil
 }
 
-func deleteManyFromDatabase(shortURLs []string) error {
-	// Implementation for deleting multiple short URLs and their associated long URLs from the database
-	// This is a placeholder for actual database interaction code
-	return nil
+func deleteManyFromDatabase(qry, tableName string) (string, error) { // Delete many documents
+
+	query := "DELETE FROM " + tableName + " WHERE " + qry
+
+	_, err := dbPool.Exec(context.Background(), query)
+	if err != nil {
+		return "", err
+	}
+
+	return "Removed successfully", nil
 }
