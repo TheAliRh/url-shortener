@@ -41,12 +41,18 @@ func main() {
 			c.JSON(200, gin.H{"short_url": shortURL})
 		})
 
-		api.GET("/shortened/:shortURL", func(c *gin.Context) {
-			// Implementation for retrieving original URL
+		api.DELETE("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for removing a single short url
+			shortURL := c.Param("shortURL")
+
+			resp, err := deleteURL(shortURL)
+			if err != nil {
+				c.JSON(404, gin.H{"error": "Short URL not found"})
+				return
+			}
+
+			c.JSON(200, gin.H{"message": resp})
 		})
-		api.DELETE("/shortened/:shortURL", func(c *gin.Context) {
-			// Implementation for deleting short URL
-		})
+
 	}
 
 	log.Printf("Starting server on port %v...\n", port)
