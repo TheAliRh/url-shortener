@@ -52,6 +52,18 @@ func main() {
 
 			c.JSON(200, gin.H{"message": resp})
 		})
+		api.GET("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for retrieving long URL
+			shortURL := c.Param("shortURL")
+
+			// Retrieve the long URL associated with the provided short URL
+			URLdoc, err := getShortURL(shortURL)
+			if err != nil {
+				c.JSON(404, gin.H{"error": "Short URL not found"})
+				return
+			}
+
+			c.JSON(200, gin.H{"url": URLdoc})
+		})
 
 	}
 
