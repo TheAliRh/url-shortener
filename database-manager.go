@@ -60,11 +60,6 @@ func addOneToDatabase(document any, tableName string) error { // Add one documen
 	return nil
 
 }
-func addManyToDatabase(shortURLs []string, newLongURLs []string) error {
-	// Implementation for adding multiple short URLs and their associated long URLs to the database
-	// This is a placeholder for actual database interaction code
-	return nil
-}
 
 func getOneFromDatabase(tableName string, qry string, document any) (doc any, err error) { // Get a document from database table
 
@@ -122,18 +117,6 @@ func getAllFromDatabase(tableName string) (pgx.Rows, error) { // Get all of the 
 	}
 
 	return docs, nil
-}
-
-func updateOneInDatabase(shortURL, newLongURL string) error {
-	// Implementation for updating the long URL associated with a short URL in the database
-	// This is a placeholder for actual database interaction code
-	return nil
-}
-
-func updateManyInDatabase(shortURLs []string, newLongURLs []string) error {
-	// Implementation for updating multiple long URLs associated with short URLs in the database
-	// This is a placeholder for actual database interaction code
-	return nil
 }
 
 func deleteOneFromDatabase(doc string, tableName string) (string, error) { // Delete a document from database table
