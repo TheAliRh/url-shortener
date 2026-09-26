@@ -49,3 +49,23 @@ func deleteURL(shortURL string) (string, error) {
 	return response, nil
 
 }
+
+func getShortURL(shortURL string) (any, error) { // Retrieve the URL data for the given short URL
+
+	host := os.Getenv("Host")
+
+	// Implementation for retrieving long URL from the database
+	document, err := getOneFromDatabase("urls", "short_url = '"+host+"/"+shortURL+"'", &URL{})
+	if err != nil {
+		log.Printf("Error retrieving long URL from database: %v\n", err)
+		return "", err
+	}
+
+	// url, ok := document.(*URL)
+	// if !ok {
+	// 	log.Printf("Error asserting document to URL type\n")
+	// 	return "", err
+	// }
+
+	return document, nil
+}
