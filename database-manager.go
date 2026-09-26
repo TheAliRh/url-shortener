@@ -100,10 +100,16 @@ func getOneFromDatabase(tableName string, qry string, document any) (doc any, er
 	return doc, nil
 }
 
-func getManyFromDatabase(shortURLs []string) (map[string]string, error) {
-	// Implementation for retrieving multiple long URLs from the database using a list of short URLs
-	// This is a placeholder for actual database interaction code
-	return map[string]string{}, nil
+func getManyFromDatabase(qry, tableName string) (pgx.Rows, error) {
+
+	query := "SELECT * FROM " + tableName + " WHERE " + qry
+
+	response, err := dbPool.Query(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
 
 func getAllFromDatabase(tableName string) (pgx.Rows, error) { // Get all of the database table's documents
