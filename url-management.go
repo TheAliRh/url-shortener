@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func createShortURL(longURL string) string {
+func createShortURL(longURL string) string { // Create a short URL for the given long URL
 
 	host := os.Getenv("Host")
 
@@ -30,4 +30,22 @@ func createShortURL(longURL string) string {
 	}
 
 	return shortURL
+}
+
+func deleteURL(shortURL string) (string, error) {
+
+	host := os.Getenv("Host")
+
+	url := "short_url = '" + host + "/" + shortURL + "'"
+
+	table := "urls"
+
+	response, err := deleteOneFromDatabase(url, table)
+	if err != nil {
+		log.Fatal("Error:", err)
+		return "", err
+	}
+
+	return response, nil
+
 }
