@@ -69,3 +69,37 @@ func getShortURL(shortURL string) (any, error) { // Retrieve the URL data for th
 
 	return document, nil
 }
+
+func getAllURLS() ([]URL, error) {
+
+	tableName := "urls"
+
+	docs, err := getAllFromDatabase(tableName)
+	if err != nil {
+		return nil, err
+	}
+	defer docs.Close()
+
+	response := []URL{}
+
+	for docs.Next() {
+
+		doc := URL{}
+
+		err := docs.Scan(
+			&doc.ID,
+			&doc.ShortURL,
+			&doc.LongURL,
+			&doc.CreatedAt,
+			&doc.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		response = append(response, doc)
+	}
+
+	return response, nil
+
+}
