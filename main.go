@@ -64,6 +64,16 @@ func main() {
 
 			c.JSON(200, gin.H{"url": URLdoc})
 		})
+		api.GET("/", func(c *gin.Context) {
+
+			resp, err := getAllURLS()
+			if err != nil {
+				c.JSON(400, gin.H{"error": "Could not get the data"})
+				return
+			}
+
+			c.JSON(200, gin.H{"urls": resp})
+		})
 
 	}
 
