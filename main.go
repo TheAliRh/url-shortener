@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -25,8 +26,25 @@ func main() {
 	router := gin.Default()
 
 	api := router.Group("/api")
+
+	redir := api.Group("/redirect")
 	{
-		api.POST("/shorten", func(c *gin.Context) { // Endpoint for creating short URL
+		redir.GET(":shortURL", func(c *gin.Context) { // Endpoint for redirection
+
+			shortURL := c.Param("shortURL")
+
+			originalURL, err := redirectURL(shortURL)
+			if err != nil {
+				c.JSON(400, gin.H{"error": "could not find the url"})
+			}
+
+			c.Redirect(http.StatusFound, originalURL)
+		})
+	}
+
+	url := api.Group("/url")
+	{
+		url.POST("/shorten", func(c *gin.Context) { // Endpoint for creating short URL
 
 			var req UserRequest
 
@@ -41,7 +59,7 @@ func main() {
 			c.JSON(200, gin.H{"short_url": shortURL})
 		})
 
-		api.DELETE("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for removing a single short url
+		url.DELETE("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for removing a single short url
 			shortURL := c.Param("shortURL")
 
 			resp, err := deleteURL(shortURL)
@@ -52,7 +70,7 @@ func main() {
 
 			c.JSON(200, gin.H{"message": resp})
 		})
-		api.GET("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for retrieving long URL
+		url.GET("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for retrieving long URL
 			shortURL := c.Param("shortURL")
 
 			// Retrieve the long URL associated with the provided short URL
@@ -64,7 +82,7 @@ func main() {
 
 			c.JSON(200, gin.H{"url": URLdoc})
 		})
-		api.GET("/", func(c *gin.Context) {
+		url.GET("/", func(c *gin.Context) { // Endpoint for getting all of the urls
 
 			resp, err := getAllURLS()
 			if err != nil {
