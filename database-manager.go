@@ -61,7 +61,7 @@ func addOneToDatabase(document any, tableName string) error { // Add one documen
 
 }
 
-func getOneFromDatabase(tableName string, qry string, document any) (doc any, err error) { // Get a document from database table
+func getOneFromDatabase(tableName string, qry string, document any) (doc *URL, err error) { // Get a document from database table
 
 	query := "SELECT * FROM " + tableName + " WHERE " + qry + " LIMIT 1"
 
@@ -90,7 +90,10 @@ func getOneFromDatabase(tableName string, qry string, document any) (doc any, er
 
 	log.Printf("Successfully retrieved document from %s table\n", tableName)
 
-	doc = document
+	doc, ok := document.(*URL)
+	if !ok {
+		return nil, err
+	}
 
 	return doc, nil
 }
