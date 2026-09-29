@@ -13,11 +13,22 @@ func redirectURL(shortURL string) (string, error) {
 
 	qry := "short_url = '" + host + "/" + shortURL + "'"
 
-	_, err := getOneFromDatabase("urls", qry, url)
-	if err != nil {
+	cachedURL, cacheError := getOneFromCache(shortURL)
+	if cacheError == nil {
+		url = cachedURL
+	} else {
+		_, err := getOneFromDatabase("urls", qry, url)
+		if err != nil {
 
-		log.Fatal("[Error]:", err)
+			log.Fatal("[Error]:", err)
+		}
+
+		err = setOneToCache(shortURL, url)
+		if err != nil {
+			return "", err
+		}
+
+		return url.LongURL, err
 	}
-
-	return url.LongURL, err
+	return url.LongURL, cacheError
 }
