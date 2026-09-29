@@ -54,12 +54,18 @@ func getShortURL(shortURL string) (any, error) { // Retrieve the URL data for th
 
 	host := os.Getenv("Host")
 
-	// Implementation for retrieving long URL from the database
-	document, err := getOneFromDatabase("urls", "short_url = '"+host+"/"+shortURL+"'", &URL{})
+	document, err := getOneFromCache(shortURL)
 	if err != nil {
-		log.Printf("Error retrieving long URL from database: %v\n", err)
-		return "", err
+		log.Printf("[ERROR] could not find in cache: %v", err)
+
+		document, err = getOneFromDatabase("urls", "short_url = '"+host+"/"+shortURL+"'", &URL{})
+		if err != nil {
+			log.Printf("[ERROR] retrieving long URL from database: %v\n", err)
+			return "", err
+		}
 	}
+
+	// Implementation for retrieving long URL from the database
 
 	// url, ok := document.(*URL)
 	// if !ok {
