@@ -20,7 +20,8 @@ func redirectURL(shortURL string) (string, error) {
 		_, err := getOneFromDatabase("urls", qry, url)
 		if err != nil {
 
-			log.Fatal("[Error]:", err)
+			log.Print("[ERROR]:", err)
+			return "", err
 		}
 
 		err = setOneToCache(shortURL, url)
