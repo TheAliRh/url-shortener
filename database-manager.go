@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"reflect"
 	"strconv"
@@ -21,7 +22,8 @@ func addOneToDatabase(document any, tableName string) error { // Add one documen
 	}
 
 	if value.Kind() != reflect.Struct {
-		log.Fatal("document must be a struct or a pointer to a struct")
+		log.Print("[ERROR] document must be a struct or a pointer to a struct")
+		return errors.New("Could not add document to database")
 	}
 
 	var columns, placeholders []string
@@ -70,7 +72,7 @@ func getOneFromDatabase(tableName string, qry string, document any) (doc *URL, e
 	value := reflect.ValueOf(document)
 	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
 
-		log.Fatal("Error: document must be a pointer to a struct:")
+		log.Print("[ERROR] document must be a pointer to a struct:", err)
 		return nil, err
 
 	}
