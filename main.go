@@ -10,20 +10,23 @@ import (
 )
 
 func main() {
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("[FATAL] No .env file: %v", err)
+	}
+	port := os.Getenv("Port")
+	host := os.Getenv("Host")
 
-	initDB()
+	// Initialize database and cache connections
+	err = initDB()
+	if err != nil {
+		log.Fatalf("[FATAL] database: %v", err)
+	}
 	defer closeDB()
 
 	initCache()
 	defer closeCache()
-
-	// Load environment variables from .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
-	port := os.Getenv("Port")
-	host := os.Getenv("Host")
 
 	// Routers
 	router := gin.Default()
