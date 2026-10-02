@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/redis/go-redis/v9"
@@ -25,6 +26,11 @@ func initCache() {
 
 func closeCache() {
 	if redisDB != nil {
-		redisDB.Close()
+		err := redisDB.Close()
+		if err != nil {
+			log.Printf("[ERROR] Failed to close cache connection: %v", err)
+		}
+		redisDB = nil
+		log.Println("[INFO] Cache connection closed successfully")
 	}
 }
