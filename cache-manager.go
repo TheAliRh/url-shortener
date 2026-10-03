@@ -17,12 +17,12 @@ func setOneToCache(key string, value *URL) error {
 
 	data, err := json.Marshal(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("cache marshal %q: %w", key, err)
 	}
 
 	err = redisDB.Set(ctx, key, data, 0).Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("cache set %q: %w", key, err)
 	}
 
 	return nil
