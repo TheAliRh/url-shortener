@@ -3,7 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+
+	"github.com/redis/go-redis/v9"
 )
+
+var ErrCacheMiss = errors.New("cache miss")
 
 var ctx = context.Background()
 
@@ -26,14 +32,16 @@ func getOneFromCache(key string) (*URL, error) {
 
 	response, err := redisDB.Get(ctx, key).Result()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrCacheMiss
+		}
+		return nil, fmt.Errorf("cache get %q: %w", key, err)
 	}
 
 	url := &URL{}
 
-	err = json.Unmarshal([]byte(response), url)
-	if err != nil {
-		return nil, err
+	if err := json.Unmarshal([]byte(response), url); err != nil {
+		return nil, fmt.Errorf("cache decode %q: %w", key, err)
 	}
 
 	return url, nil
