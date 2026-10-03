@@ -18,14 +18,18 @@ func main() {
 	port := os.Getenv("Port")
 	host := os.Getenv("Host")
 
-	// Initialize database and cache connections
+	// Initialize database connection
 	err = initDB()
 	if err != nil {
 		log.Fatalf("[FATAL] database: %v", err)
 	}
 	defer closeDB()
 
-	initCache()
+	// Initialize cache connection
+	err = initCache()
+	if err != nil {
+		log.Fatalf("[FATAL] cache: %v", err)
+	}
 	defer closeCache()
 
 	// Routers
