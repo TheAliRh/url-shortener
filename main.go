@@ -35,6 +35,10 @@ func main() {
 	// Routers
 	router := gin.Default()
 
+	router.GET("/health", func(c *gin.Context) { // Endpoint for health check
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	api := router.Group("/api")
 
 	redir := api.Group("/redirect")
