@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"time"
@@ -52,28 +53,39 @@ func deleteURL(shortURL string) (string, error) {
 
 func getShortURL(shortURL string) (any, error) { // Retrieve the URL data for the given short URL
 
-	host := os.Getenv("Host")
-
-	document, err := getOneFromCache(shortURL)
+	url, err := findURL(shortURL)
 	if err != nil {
-		log.Printf("[ERROR] could not find in cache: %v", err)
+		return "", err
+	}
+	return url, nil
+}
 
-		document, err = getOneFromDatabase("urls", "short_url = '"+host+"/"+shortURL+"'", &URL{})
-		if err != nil {
-			log.Printf("[ERROR] retrieving long URL from database: %v\n", err)
-			return "", err
-		}
+func findURL(shortURL string) (*URL, error) {
+
+	cachedURL, err := getOneFromCache(shortURL)
+	if err == nil {
+		return cachedURL, nil
 	}
 
-	// Implementation for retrieving long URL from the database
+	if !errors.Is(err, ErrCacheMiss) {
+		log.Printf("[ERROR] cache: %v", err)
 
-	// url, ok := document.(*URL)
-	// if !ok {
-	// 	log.Printf("Error asserting document to URL type\n")
-	// 	return "", err
-	// }
+	}
 
-	return document, nil
+	host := os.Getenv("Host")
+	qry := "short_url = '" + host + "/" + shortURL + "'" // existing query, still injectable (see below)
+
+	url, err := getOneFromDatabase("urls", qry, &URL{})
+	if err != nil {
+		return nil, err
+	}
+
+	// fill the cache for next time (key = the code only, same as getOneFromCache)
+	if err := setOneToCache(shortURL, url); err != nil {
+		log.Printf("[ERROR] cache: %v", err)
+	}
+
+	return url, nil
 }
 
 func getAllURLS() ([]URL, error) {
