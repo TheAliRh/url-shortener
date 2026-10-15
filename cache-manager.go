@@ -9,8 +9,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var ErrCacheMiss = errors.New("cache miss")
-
 var ctx = context.Background()
 
 func setOneToCache(key string, value *URL) error {
