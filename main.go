@@ -50,6 +50,7 @@ func main() {
 			originalURL, err := redirectURL(shortURL)
 			if err != nil {
 				c.JSON(400, gin.H{"error": "could not find the url"})
+				return
 			}
 
 			c.Redirect(http.StatusFound, originalURL)
