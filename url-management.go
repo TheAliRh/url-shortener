@@ -43,7 +43,6 @@ func deleteURL(shortURL string) (string, error) {
 
 	response, err := deleteOneFromDatabase(url, table)
 	if err != nil {
-		log.Print("[ERROR]:", err)
 		return "", err
 	}
 
