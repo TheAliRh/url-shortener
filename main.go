@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -79,10 +80,14 @@ func main() {
 
 			resp, err := deleteURL(shortURL)
 			if err != nil {
-				c.JSON(404, gin.H{"error": "Short URL not found"})
-				return
+				if errors.Is(err, ErrNotFound) {
+					c.JSON(404, gin.H{"error": "Short URL not found"})
+					return
+				} else {
+					c.JSON(500, gin.H{"error": "Internal server error"})
+					return
+				}
 			}
-
 			c.JSON(200, gin.H{"message": resp})
 		})
 		url.GET("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for retrieving long URL
