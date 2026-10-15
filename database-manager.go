@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"reflect"
 	"strconv"
@@ -128,9 +129,12 @@ func deleteOneFromDatabase(doc string, tableName string) (string, error) { // De
 
 	query := "DELETE FROM " + tableName + " WHERE " + doc
 
-	_, err := dbPool.Exec(context.Background(), query)
+	tag, err := dbPool.Exec(context.Background(), query)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("delete from %s: %w", tableName, err)
+	}
+	if tag.RowsAffected() == 0 {
+		return "", ErrNotFound
 	}
 
 	return "1", nil
@@ -140,10 +144,13 @@ func deleteManyFromDatabase(qry, tableName string) (string, error) { // Delete m
 
 	query := "DELETE FROM " + tableName + " WHERE " + qry
 
-	_, err := dbPool.Exec(context.Background(), query)
+	tag, err := dbPool.Exec(context.Background(), query)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("delete from %s: %w", tableName, err)
+	}
+	if tag.RowsAffected() == 0 {
+		return "", ErrNotFound
 	}
 
-	return "Removed successfully", nil
+	return fmt.Sprintf("%d", tag.RowsAffected()), nil
 }
