@@ -71,7 +71,13 @@ func main() {
 			}
 
 			// Create the short URL using the provided long URL
-			shortURL := createShortURL(req.LongURL)
+			shortURL, err := createShortURL(req.LongURL)
+			if err != nil {
+				log.Printf("[ERROR] create: %v", err)
+				c.JSON(500, gin.H{"error": "Internal server error"})
+				return
+			}
+
 			c.JSON(200, gin.H{"short_url": shortURL})
 		})
 
