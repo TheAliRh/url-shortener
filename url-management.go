@@ -13,11 +13,11 @@ func createShortURL(longURL string) (string, error) { // Create a short URL for 
 	host := os.Getenv("Host")
 
 	// Implementation for creating short URL
-	shortURL := host + "/" + generateRandomCode(7)
+	code := generateRandomCode(7)
 
 	url := URL{
 		ID:        0, // ID will be auto-incremented by the database
-		ShortURL:  shortURL,
+		ShortURL:  code,
 		LongURL:   longURL,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -29,16 +29,14 @@ func createShortURL(longURL string) (string, error) { // Create a short URL for 
 		return "", fmt.Errorf("Error adding URL to database: %v\n", err)
 	}
 
-	log.Printf("Short URL created: %s for long URL: %s\n", shortURL, longURL)
+	log.Printf("Short URL created: %s for long URL: %s\n", code, longURL)
 
-	return shortURL, nil
+	return host + "/" + code, nil
 }
 
 func deleteURL(shortURL string) (string, error) {
 
-	host := os.Getenv("Host")
-
-	url := "short_url = '" + host + "/" + shortURL + "'"
+	url := "short_url = '" + shortURL + "'"
 
 	table := "urls"
 
@@ -72,8 +70,7 @@ func findURL(shortURL string) (*URL, error) {
 
 	}
 
-	host := os.Getenv("Host")
-	qry := "short_url = '" + host + "/" + shortURL + "'" // existing query, still injectable (see below)
+	qry := "short_url = '" + shortURL + "'" // existing query, still injectable (see below)
 
 	url, err := getOneFromDatabase("urls", qry, &URL{})
 	if err != nil {
