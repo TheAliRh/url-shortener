@@ -19,6 +19,10 @@ func main() {
 	port := os.Getenv("Port")
 	host := os.Getenv("Host")
 
+	if err := initBaseURL(); err != nil {
+		log.Fatalf("[FATAL] config: %v", err)
+	}
+
 	// Initialize database connection
 	err = initDB()
 	if err != nil {
