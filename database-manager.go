@@ -64,39 +64,32 @@ func addOneToDatabase(document any, tableName string) error { // Add one documen
 
 }
 
-func getOneFromDatabase(tableName string, qry string, document any) (doc *URL, err error) { // Get a document from database table
+func getOneFromDatabase(tableName string, qry string, document any) (*URL, error) { // Get a document from database table
+
+	doc, ok := document.(*URL)
+	if !ok {
+		return nil, errors.New("document must be a pointer to a URL struct")
+	}
 
 	query := "SELECT * FROM " + tableName + " WHERE " + qry + " LIMIT 1"
 
 	row := dbPool.QueryRow(context.Background(), query)
 
-	value := reflect.ValueOf(document)
-	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
-
-		log.Print("[ERROR] document must be a pointer to a struct:", err)
-		return nil, err
-
-	}
-
-	value = value.Elem()
+	value := reflect.ValueOf(doc).Elem()
 
 	scanValues := make([]any, value.NumField())
 	for i := 0; i < value.NumField(); i++ {
 		scanValues[i] = value.Field(i).Addr().Interface()
 	}
 
-	err = row.Scan(scanValues...)
-	if err != nil {
-		log.Printf("Error scanning row: %v\n", err)
-		return nil, err
+	if err := row.Scan(scanValues...); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("Error scanning row: %v\n", err)
 	}
 
 	log.Printf("Successfully retrieved document from %s table\n", tableName)
-
-	doc, ok := document.(*URL)
-	if !ok {
-		return nil, err
-	}
 
 	return doc, nil
 }
