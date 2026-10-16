@@ -4,16 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"time"
 )
 
 func createShortURL(longURL string) (string, error) { // Create a short URL for the given long URL
 
-	host := os.Getenv("Host")
-
 	// Implementation for creating short URL
 	code := generateRandomCode(7)
+
+	link, err := shortLink(code)
+	if err != nil {
+		return "", fmt.Errorf("build short link: %w", err)
+	}
 
 	url := URL{
 		ID:        0, // ID will be auto-incremented by the database
@@ -24,14 +26,14 @@ func createShortURL(longURL string) (string, error) { // Create a short URL for 
 	}
 
 	// Add the short URL and long URL to the database
-	err := addOneToDatabase(url, "urls")
+	err = addOneToDatabase(url, "urls")
 	if err != nil {
 		return "", fmt.Errorf("Error adding URL to database: %v\n", err)
 	}
 
-	log.Printf("Short URL created: %s for long URL: %s\n", code, longURL)
+	log.Printf("Short URL created: %s for long URL: %s\n", link, longURL)
 
-	return host + "/" + code, nil
+	return link, nil
 }
 
 func deleteURL(shortURL string) (string, error) {
