@@ -96,7 +96,7 @@ func getOneFromDatabase(tableName string, qry string, document any) (*URL, error
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("Error scanning row: %v\n", err)
+		return nil, fmt.Errorf("scan %s row: %w", tableName, err)
 	}
 
 	log.Printf("Successfully retrieved document from %s table\n", tableName)
