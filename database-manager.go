@@ -10,7 +10,15 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
+
+const pgUniqueViolation = "23505"
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolation
+}
 
 func addOneToDatabase(document any, tableName string) error { // Add one document to the database
 
@@ -54,8 +62,10 @@ func addOneToDatabase(document any, tableName string) error { // Add one documen
 
 	_, err := dbPool.Exec(context.Background(), query, values...)
 	if err != nil {
-		log.Printf("Error executing query: %v\n", err)
-		return err
+		if isUniqueViolation(err) {
+			return fmt.Errorf("insert into %s: %w: %w", tableName, ErrDuplicate, err)
+		}
+		return fmt.Errorf("insert into %s: %w", tableName, err)
 	}
 
 	log.Printf("Successfully added document to %s table\n", tableName)
