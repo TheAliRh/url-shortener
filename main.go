@@ -54,8 +54,13 @@ func main() {
 
 			originalURL, err := redirectURL(shortURL)
 			if err != nil {
-				c.JSON(400, gin.H{"error": "could not find the url"})
-				return
+				if errors.Is(err, ErrNotFound) {
+					c.JSON(http.StatusNotFound, gin.H{"error": "could not find the url"})
+					return
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+					return
+				}
 			}
 
 			c.Redirect(http.StatusFound, originalURL)
@@ -70,7 +75,7 @@ func main() {
 
 			// Bind the incoming JSON to the UserRequest struct and validate it
 			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": "Invalid request"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 				return
 			}
 
@@ -78,11 +83,11 @@ func main() {
 			shortURL, err := createShortURL(req.LongURL)
 			if err != nil {
 				log.Printf("[ERROR] create: %v", err)
-				c.JSON(500, gin.H{"error": "Internal server error"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 				return
 			}
 
-			c.JSON(200, gin.H{"short_url": shortURL})
+			c.JSON(http.StatusOK, gin.H{"short_url": shortURL})
 		})
 
 		url.DELETE("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for removing a single short url
@@ -91,14 +96,14 @@ func main() {
 			resp, err := deleteURL(shortURL)
 			if err != nil {
 				if errors.Is(err, ErrNotFound) {
-					c.JSON(404, gin.H{"error": "Short URL not found"})
+					c.JSON(http.StatusNotFound, gin.H{"error": "Short URL not found"})
 					return
 				} else {
-					c.JSON(500, gin.H{"error": "Internal server error"})
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 					return
 				}
 			}
-			c.JSON(200, gin.H{"message": resp})
+			c.JSON(http.StatusOK, gin.H{"message": resp})
 		})
 		url.GET("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for retrieving long URL
 			shortURL := c.Param("shortURL")
@@ -106,21 +111,27 @@ func main() {
 			// Retrieve the long URL associated with the provided short URL
 			URLdoc, err := getShortURL(shortURL)
 			if err != nil {
-				c.JSON(404, gin.H{"error": "Short URL not found"})
+				if errors.Is(err, ErrNotFound) {
+					c.JSON(http.StatusNotFound, gin.H{"error": "Short URL not found"})
+				} else {
+					log.Printf("[ERROR] get: %v", err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+				}
 				return
 			}
 
-			c.JSON(200, gin.H{"url": URLdoc})
+			c.JSON(http.StatusOK, gin.H{"url": URLdoc})
 		})
 		url.GET("/", func(c *gin.Context) { // Endpoint for getting all of the urls
 
 			resp, err := getAllURLS()
 			if err != nil {
-				c.JSON(400, gin.H{"error": "Could not get the data"})
+				log.Printf("[ERROR] list: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Could not get the data"})
 				return
 			}
 
-			c.JSON(200, gin.H{"urls": resp})
+			c.JSON(http.StatusOK, gin.H{"urls": resp})
 		})
 
 	}
