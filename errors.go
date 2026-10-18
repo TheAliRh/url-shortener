@@ -7,4 +7,5 @@ var (
 	ErrNotFound   = errors.New("not found")
 	ErrCacheMiss  = errors.New("cache miss")
 	ErrDuplicate  = errors.New("duplicate")
+	ErrInvalid    = errors.New("invalid input")
 )
