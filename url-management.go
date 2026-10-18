@@ -7,33 +7,45 @@ import (
 	"time"
 )
 
+const (
+	codeLength      = 7
+	maxCodeAttempts = 5
+)
+
 func createShortURL(longURL string) (string, error) { // Create a short URL for the given long URL
 
-	// Implementation for creating short URL
-	code := generateRandomCode(7)
+	for attempt := 1; attempt <= maxCodeAttempts; attempt++ {
+		// Implementation for creating short URL
+		code := generateRandomCode(7)
 
-	link, err := shortLink(code)
-	if err != nil {
-		return "", fmt.Errorf("build short link: %w", err)
+		link, err := shortLink(code)
+		if err != nil {
+			return "", fmt.Errorf("build short link: %w", err)
+		}
+
+		url := URL{
+			ID:        0, // ID will be auto-incremented by the database
+			ShortURL:  code,
+			LongURL:   longURL,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		// Add the short URL and long URL to the database
+		err = addOneToDatabase(url, "urls")
+		if err == nil {
+			log.Printf("Short URL created: %s for long URL: %s\n", link, longURL)
+			return link, nil
+		}
+
+		if !errors.Is(err, ErrDuplicate) {
+			return "", fmt.Errorf("create short url: %w", err) // a real failure, don't retry
+		}
+
+		log.Printf("[WARN] short code collision (attempt %d/%d), retrying", attempt, maxCodeAttempts)
 	}
 
-	url := URL{
-		ID:        0, // ID will be auto-incremented by the database
-		ShortURL:  code,
-		LongURL:   longURL,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	// Add the short URL and long URL to the database
-	err = addOneToDatabase(url, "urls")
-	if err != nil {
-		return "", fmt.Errorf("Error adding URL to database: %v\n", err)
-	}
-
-	log.Printf("Short URL created: %s for long URL: %s\n", link, longURL)
-
-	return link, nil
+	return "", fmt.Errorf("create short url: no free code after %d attempts", maxCodeAttempts)
 }
 
 func deleteURL(shortURL string) (string, error) {
