@@ -43,9 +43,15 @@ func validateLongURL(raw string) (string, error) {
 	if u.Scheme != "http" && u.Scheme != "https" { // url.Parse already lowercases the scheme
 		return "", fmt.Errorf("%w: only http and https are allowed", ErrInvalid)
 	}
+
 	if u.Hostname() == "" {
 		return "", fmt.Errorf("%w: missing host", ErrInvalid)
 	}
+
+	if normalizeHost(u) == baseHost {
+		return "", fmt.Errorf("%w: URL points to this service", ErrInvalid)
+	}
+
 	if u.User != nil { // blocks https://trusted.com@evil.com tricks
 		return "", fmt.Errorf("%w: credentials in URL are not allowed", ErrInvalid)
 	}
