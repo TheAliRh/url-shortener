@@ -14,6 +14,11 @@ const (
 
 func createShortURL(longURL string) (string, error) { // Create a short URL for the given long URL
 
+	longURL, err := validateLongURL(longURL)
+	if err != nil {
+		return "", err
+	}
+
 	for attempt := 1; attempt <= maxCodeAttempts; attempt++ {
 		// Implementation for creating short URL
 		code := generateRandomCode(7)
