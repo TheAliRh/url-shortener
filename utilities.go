@@ -2,7 +2,10 @@ package main
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
+	"net/url"
+	"strings"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -22,4 +25,30 @@ func generateRandomCode(length int) string {
 	}
 
 	return string(code)
+}
+
+const maxURLLength = 2048
+
+func validateLongURL(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || len(raw) > maxURLLength {
+		return "", fmt.Errorf("%w: empty or too long", ErrInvalid)
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrInvalid, err)
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" { // url.Parse already lowercases the scheme
+		return "", fmt.Errorf("%w: only http and https are allowed", ErrInvalid)
+	}
+	if u.Hostname() == "" {
+		return "", fmt.Errorf("%w: missing host", ErrInvalid)
+	}
+	if u.User != nil { // blocks https://trusted.com@evil.com tricks
+		return "", fmt.Errorf("%w: credentials in URL are not allowed", ErrInvalid)
+	}
+
+	return u.String(), nil
 }
