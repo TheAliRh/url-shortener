@@ -50,11 +50,9 @@ func createShortURL(longURL string) (string, error) { // Create a short URL for 
 
 func deleteURL(shortURL string) (string, error) {
 
-	url := "short_url = '" + shortURL + "'"
-
 	table := "urls"
 
-	response, err := deleteOneFromDatabase(url, table)
+	response, err := deleteOneFromDatabase("short_url = $1", table, shortURL)
 	if err != nil {
 		return "", err
 	}
@@ -84,9 +82,7 @@ func findURL(shortURL string) (*URL, error) {
 
 	}
 
-	qry := "short_url = '" + shortURL + "'" // existing query, still injectable (see below)
-
-	url, err := getOneFromDatabase("urls", qry, &URL{})
+	url, err := getOneFromDatabase("urls", "short_url = $1", &URL{}, shortURL)
 	if err != nil {
 		return nil, err
 	}
