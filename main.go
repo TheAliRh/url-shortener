@@ -40,19 +40,16 @@ func main() {
 	// Routers
 	router := gin.Default()
 
-	router.GET("/health", func(c *gin.Context) { // Endpoint for health check
-		c.JSON(200, gin.H{"status": "ok"})
-	})
-
-	api := router.Group("/api")
-
-	redir := api.Group("/redirect")
 	{
-		redir.GET(":shortURL", func(c *gin.Context) { // Endpoint for redirection
+		router.GET("/health", func(c *gin.Context) { // Endpoint for health check
+			c.JSON(200, gin.H{"status": "ok"})
+		})
 
-			shortURL := c.Param("shortURL")
+		router.GET(":code", func(c *gin.Context) { // Endpoint for redirection
 
-			originalURL, err := redirectURL(shortURL)
+			shortURLcode := c.Param("code")
+
+			originalURL, err := redirectURL(shortURLcode)
 			if err != nil {
 				if errors.Is(err, ErrNotFound) {
 					c.JSON(http.StatusNotFound, gin.H{"error": "could not find the url"})
@@ -66,6 +63,8 @@ func main() {
 			c.Redirect(http.StatusFound, originalURL)
 		})
 	}
+
+	api := router.Group("/api")
 
 	url := api.Group("/url")
 	{
