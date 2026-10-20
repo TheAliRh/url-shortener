@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os"
+	"strings"
 )
 
-var baseURL string
+var (
+	baseURL  string
+	baseHost string // normalized "host:port" of BaseURL
+)
 
 // initBaseURL validates the public base URL once at startup.
 func initBaseURL() error {
@@ -21,7 +26,22 @@ func initBaseURL() error {
 	}
 
 	baseURL = raw
+	baseHost = normalizeHost(u)
 	return nil
+}
+
+func normalizeHost(u *url.URL) string {
+	host := strings.TrimSuffix(strings.ToLower(u.Hostname()), ".")
+
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+	return net.JoinHostPort(host, port)
 }
 
 // shortLink builds the full, clickable link for a short code.
