@@ -24,7 +24,7 @@ func handle(h HandlerFunc) gin.HandlerFunc {
 
 		// Client errors (4xx) are expected, so only log server failures
 		if status >= http.StatusInternalServerError {
-			log.Printf("[ERROR] %s %s: %v", c.Request.Method, c.Request.URL.Path, err)
+			log.Printf("[ERROR] %d %s %s: %v", status, c.Request.Method, c.Request.URL.Path, err)
 		}
 
 		if c.Writer.Written() {
@@ -35,15 +35,25 @@ func handle(h HandlerFunc) gin.HandlerFunc {
 	}
 }
 
+type errorMapping struct {
+	target  error
+	status  int
+	message string
+}
+
+var errorMappings = []errorMapping{
+	{ErrNotFound, http.StatusNotFound, "Short URL not found"},
+	{ErrInvalid, http.StatusBadRequest, "Invalid request"},
+}
+
 // statusFor maps an error to an HTTP status and a client-safe message.
 func statusFor(err error) (int, string) {
-	switch {
-	case errors.Is(err, ErrNotFound):
-		return http.StatusNotFound, "Short URL not found"
-	case errors.Is(err, ErrInvalid):
-		return http.StatusBadRequest, "Invalid request"
-	default:
-		// Anything unrecognized is a server problem: never leak its details
-		return http.StatusInternalServerError, "Internal server error"
+	for _, m := range errorMappings {
+		if errors.Is(err, m.target) {
+			return m.status, m.message
+		}
 	}
+
+	// Anything unrecognized is a server problem: never leak its details
+	return http.StatusInternalServerError, "Internal server error"
 }
