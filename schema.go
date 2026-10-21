@@ -10,4 +10,5 @@ type URL struct {
 	LongURL   string    `db:"long_url" json:"long_url"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UserID    int64     `db:"user_id" json:"-"` // must stay LAST
 }
