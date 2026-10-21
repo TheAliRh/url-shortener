@@ -46,5 +46,5 @@ func normalizeHost(u *url.URL) string {
 
 // shortLink builds the full, clickable link for a short code.
 func shortLink(code string) (string, error) {
-	return url.JoinPath(baseURL, "api", "redirect", code)
+	return url.JoinPath(baseURL, code)
 }
