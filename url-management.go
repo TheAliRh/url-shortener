@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -12,10 +13,14 @@ const (
 	maxCodeAttempts = 5
 )
 
-func createShortURL(longURL string, userID int64) (string, error) { // Create a short URL for the given long URL
+func createShortURL(ctx context.Context, longURL string, userID int64) (string, error) { // Create a short URL for the given long URL
 
 	longURL, err := validateLongURL(longURL)
 	if err != nil {
+		return "", err
+	}
+
+	if err := checkURLSafety(ctx, longURL); err != nil {
 		return "", err
 	}
 
