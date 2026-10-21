@@ -36,5 +36,10 @@ func redirectHandler(c *gin.Context) {
 		return
 	}
 
+	if isBlockedDestination(originalURL) {
+		c.Data(http.StatusGone, "text/html; charset=utf-8", []byte(blockedPage))
+		return
+	}
+
 	c.Redirect(http.StatusFound, originalURL)
 }
