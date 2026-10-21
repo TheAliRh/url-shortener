@@ -51,10 +51,10 @@ func main() {
 
 		router.GET("/favicon.ico", func(c *gin.Context) { c.Status(http.StatusNoContent) })
 
-		router.GET("/:code", redirectHandler)
+		router.GET("/:code", rateLimit(ruleRedirectIP, byIP), redirectHandler)
 	}
 
-	api := router.Group("/api")
+	api := router.Group("/api", rateLimit(ruleAPIIP, byIP))
 
 	auth := api.Group("/auth")
 	{
@@ -63,9 +63,9 @@ func main() {
 		auth.POST("/logout", authRequired(), logoutHandler)
 	}
 
-	url := api.Group("/url", authRequired())
+	url := api.Group("/url", authRequired(), rateLimit(ruleAPIUser, byUser))
 	{
-		url.POST("/shorten", func(c *gin.Context) { // Endpoint for creating short URL
+		url.POST("/shorten", rateLimit(ruleCreateIP, byIP), rateLimit(ruleCreateUser, byUser), func(c *gin.Context) { // Endpoint for creating short URL
 
 			var req UserRequest
 
@@ -138,6 +138,8 @@ func main() {
 		})
 
 	}
+
+	router.SetTrustedProxies(nil)
 
 	log.Printf("Starting server on port %v...\n", port)
 	router.Run(host + ":" + port)
