@@ -58,3 +58,15 @@ func validateLongURL(raw string) (string, error) {
 
 	return u.String(), nil
 }
+
+func validCode(code string) bool {
+	if len(code) != codeLength {
+		return false
+	}
+	for i := 0; i < len(code); i++ {
+		if strings.IndexByte(charset, code[i]) < 0 {
+			return false
+		}
+	}
+	return true
+}
