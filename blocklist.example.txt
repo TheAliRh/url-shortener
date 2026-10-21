@@ -1,0 +1,7 @@
+# One domain per line. A listed domain also blocks all its subdomains.
+# Hosts-file lines ("0.0.0.0 bad.example") work too, so public feeds can be pasted in.
+# Reload without restarting:  kill -HUP <server pid>
+
+malware-example.test
+phishing-example.test
+0.0.0.0 tracker-example.test
