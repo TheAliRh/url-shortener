@@ -37,6 +37,10 @@ func main() {
 	}
 	defer closeCache()
 
+	if err := initURLSafety(); err != nil {
+		log.Fatalf("[FATAL] url safety: %v", err)
+	}
+
 	if err := initAuth(); err != nil {
 		log.Fatalf("[FATAL] auth: %v", err)
 	}
@@ -74,13 +78,24 @@ func main() {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 				return
 			}
+
 			userID := c.GetInt64(userIDKey)
 
 			// Create the short URL using the provided long URL
-			shortURL, err := createShortURL(req.LongURL, userID)
+			shortURL, err := createShortURL(c.Request.Context(), req.LongURL, userID)
 			if err != nil {
-				log.Printf("[ERROR] create: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+				switch {
+				case errors.Is(err, ErrInvalid):
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Only valid http and https URLs are allowed"})
+				case errors.Is(err, ErrBlockedURL):
+					c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "This link can't be shortened because it may be unsafe."})
+				case errors.Is(err, ErrSafetyUnavailable):
+					c.Header("Retry-After", "30")
+					c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Couldn't verify this link right now. Try again shortly."})
+				default:
+					log.Printf("[ERROR] create: %v", err) // your original 500 handling, unchanged
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+				}
 				return
 			}
 
