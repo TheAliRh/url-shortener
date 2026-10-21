@@ -108,16 +108,9 @@ func getOneFromDatabase(tableName, condition string, document any, args ...any) 
 	return doc, nil
 }
 
-func getManyFromDatabase(qry, tableName string) (pgx.Rows, error) {
-
-	query := "SELECT * FROM " + quoteIdent(tableName) + " WHERE " + qry
-
-	response, err := dbPool.Query(context.Background(), query)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
+func getManyFromDatabase(tableName, condition string, args ...any) (pgx.Rows, error) {
+	query := "SELECT * FROM " + quoteIdent(tableName) + " WHERE " + condition
+	return dbPool.Query(context.Background(), query, args...)
 }
 
 func getAllFromDatabase(tableName string) (pgx.Rows, error) { // Get all of the database table's documents
