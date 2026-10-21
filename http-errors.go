@@ -44,6 +44,7 @@ type errorMapping struct {
 var errorMappings = []errorMapping{
 	{ErrNotFound, http.StatusNotFound, "Short URL not found"},
 	{ErrInvalid, http.StatusBadRequest, "Invalid request"},
+	{ErrUnauthorized, http.StatusUnauthorized, "Unauthorized"},
 }
 
 // statusFor maps an error to an HTTP status and a client-safe message.
