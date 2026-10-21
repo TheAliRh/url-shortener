@@ -12,7 +12,7 @@ const (
 	maxCodeAttempts = 5
 )
 
-func createShortURL(longURL string) (string, error) { // Create a short URL for the given long URL
+func createShortURL(longURL string, userID int64) (string, error) { // Create a short URL for the given long URL
 
 	longURL, err := validateLongURL(longURL)
 	if err != nil {
@@ -34,6 +34,7 @@ func createShortURL(longURL string) (string, error) { // Create a short URL for 
 			LongURL:   longURL,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
+			UserID:    userID,
 		}
 
 		// Add the short URL and long URL to the database
@@ -53,26 +54,20 @@ func createShortURL(longURL string) (string, error) { // Create a short URL for 
 	return "", fmt.Errorf("create short url: no free code after %d attempts", maxCodeAttempts)
 }
 
-func deleteURL(shortURL string) (string, error) {
-
-	table := "urls"
-
-	response, err := deleteOneFromDatabase("short_url = $1", table, shortURL)
+func deleteURL(shortURL string, userID int64) (string, error) {
+	resp, err := deleteOneFromDatabase("short_url = $1 AND user_id = $2", "urls", shortURL, userID)
 	if err != nil {
-		return "", err
+		return "", err // ErrNotFound if not found OR not owned
 	}
-
-	return response, nil
-
+	if err := deleteOneFromCache(shortURL); err != nil {
+		log.Printf("[ERROR] cache: %v", err)
+	}
+	return resp, nil
 }
 
-func getShortURL(shortURL string) (any, error) { // Retrieve the URL data for the given short URL
-
-	url, err := findURL(shortURL)
-	if err != nil {
-		return "", err
-	}
-	return url, nil
+func getShortURL(shortURL string, userID int64) (*URL, error) {
+	// DB only, never the cache, because the cached copy has no owner
+	return getOneFromDatabase("urls", "short_url = $1 AND user_id = $2", &URL{}, shortURL, userID)
 }
 
 func findURL(shortURL string) (*URL, error) {
@@ -100,28 +95,28 @@ func findURL(shortURL string) (*URL, error) {
 	return url, nil
 }
 
-func getAllURLS() ([]URL, error) {
-
+func getAllURLS(userID int64, limit, offset int) ([]URL, error) {
 	tableName := "urls"
 
-	docs, err := getAllFromDatabase(tableName)
+	rows, err := getManyFromDatabase(tableName, "user_id = $1 ORDER BY id DESC LIMIT $2 OFFSET $3", userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	defer docs.Close()
+	defer rows.Close()
 
 	response := []URL{}
 
-	for docs.Next() {
+	for rows.Next() {
 
 		doc := URL{}
 
-		err := docs.Scan(
+		err := rows.Scan(
 			&doc.ID,
 			&doc.ShortURL,
 			&doc.LongURL,
 			&doc.CreatedAt,
 			&doc.UpdatedAt,
+			&doc.UserID,
 		)
 		if err != nil {
 			return nil, err
