@@ -69,8 +69,7 @@ func signupHandler(c *gin.Context) {
 	}
 
 	var req signupRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Provide a valid email and a password of 10 to 128 characters"})
+	if !bindJSON(c, &req, "Provide a valid email and a password of 10 to 128 characters") {
 		return
 	}
 	email := normalizeEmail(req.Email)
@@ -116,8 +115,7 @@ func loginHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var req loginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Provide an email and a password"})
+	if !bindJSON(c, &req, "Provide a valid email and a password of 10 to 128 characters") {
 		return
 	}
 	email := normalizeEmail(req.Email)
