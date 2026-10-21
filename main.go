@@ -37,6 +37,10 @@ func main() {
 	}
 	defer closeCache()
 
+	if err := initAuth(); err != nil {
+		log.Fatalf("[FATAL] auth: %v", err)
+	}
+
 	// Routers
 	router := gin.Default()
 
@@ -45,28 +49,21 @@ func main() {
 			c.JSON(200, gin.H{"status": "ok"})
 		})
 
-		router.GET(":code", func(c *gin.Context) { // Endpoint for redirection
+		router.GET("/favicon.ico", func(c *gin.Context) { c.Status(http.StatusNoContent) })
 
-			shortURLcode := c.Param("code")
-
-			originalURL, err := redirectURL(shortURLcode)
-			if err != nil {
-				if errors.Is(err, ErrNotFound) {
-					c.JSON(http.StatusNotFound, gin.H{"error": "could not find the url"})
-					return
-				} else {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-					return
-				}
-			}
-
-			c.Redirect(http.StatusFound, originalURL)
-		})
+		router.GET("/:code", redirectHandler)
 	}
 
 	api := router.Group("/api")
 
-	url := api.Group("/url")
+	auth := api.Group("/auth")
+	{
+		auth.POST("/signup", signupHandler)
+		auth.POST("/login", loginHandler)
+		auth.POST("/logout", authRequired(), logoutHandler)
+	}
+
+	url := api.Group("/url", authRequired())
 	{
 		url.POST("/shorten", func(c *gin.Context) { // Endpoint for creating short URL
 
@@ -77,9 +74,10 @@ func main() {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 				return
 			}
+			userID := c.GetInt64(userIDKey)
 
 			// Create the short URL using the provided long URL
-			shortURL, err := createShortURL(req.LongURL)
+			shortURL, err := createShortURL(req.LongURL, userID)
 			if err != nil {
 				log.Printf("[ERROR] create: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -92,7 +90,8 @@ func main() {
 		url.DELETE("/shortened/:shortURL", func(c *gin.Context) { // Endpoint for removing a single short url
 			shortURL := c.Param("shortURL")
 
-			resp, err := deleteURL(shortURL)
+			userID := c.GetInt64(userIDKey)
+			resp, err := deleteURL(shortURL, userID)
 			if err != nil {
 				if errors.Is(err, ErrNotFound) {
 					c.JSON(http.StatusNotFound, gin.H{"error": "Short URL not found"})
@@ -108,7 +107,8 @@ func main() {
 			shortURL := c.Param("shortURL")
 
 			// Retrieve the long URL associated with the provided short URL
-			URLdoc, err := getShortURL(shortURL)
+			userID := c.GetInt64(userIDKey)
+			URLdoc, err := getShortURL(shortURL, userID)
 			if err != nil {
 				if errors.Is(err, ErrNotFound) {
 					c.JSON(http.StatusNotFound, gin.H{"error": "Short URL not found"})
@@ -123,7 +123,11 @@ func main() {
 		})
 		url.GET("/", func(c *gin.Context) { // Endpoint for getting all of the urls
 
-			resp, err := getAllURLS()
+			userID := c.GetInt64(userIDKey)
+			limit := 10 // Default limit
+			offset := 0 // Default offset
+
+			resp, err := getAllURLS(userID, limit, offset)
 			if err != nil {
 				log.Printf("[ERROR] list: %v", err)
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Could not get the data"})
