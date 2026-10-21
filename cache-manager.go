@@ -44,3 +44,10 @@ func getOneFromCache(key string) (*URL, error) {
 
 	return url, nil
 }
+
+func deleteOneFromCache(key string) error {
+	if err := redisDB.Del(ctx, key).Err(); err != nil {
+		return fmt.Errorf("cache delete %q: %w", key, err)
+	}
+	return nil
+}
