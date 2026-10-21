@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -58,9 +59,9 @@ func main() {
 		router.GET("/:code", rateLimit(ruleRedirectIP, byIP), redirectHandler)
 	}
 
-	api := router.Group("/api", rateLimit(ruleAPIIP, byIP))
+	api := router.Group("/api", bodyLimit(maxAPIBody), rateLimit(ruleAPIIP, byIP))
 
-	auth := api.Group("/auth")
+	auth := api.Group("/auth", bodyLimit(maxAPIBody))
 	{
 		auth.POST("/signup", signupHandler)
 		auth.POST("/login", loginHandler)
@@ -71,11 +72,10 @@ func main() {
 	{
 		url.POST("/shorten", rateLimit(ruleCreateIP, byIP), rateLimit(ruleCreateUser, byUser), func(c *gin.Context) { // Endpoint for creating short URL
 
-			var req UserRequest
-
-			// Bind the incoming JSON to the UserRequest struct and validate it
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			var req struct {
+				LongURL string `json:"long_url" binding:"required"`
+			}
+			if !bindJSON(c, &req, "Invalid request") {
 				return
 			}
 
@@ -157,6 +157,20 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	log.Printf("Starting server on port %v...\n", port)
-	router.Run(host + ":" + port)
+
+	addr := host + ":" + port
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    16 << 10,
+	}
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalf("[FATAL] server: %v", err)
+	}
 
 }
