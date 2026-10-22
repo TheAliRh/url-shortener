@@ -5,11 +5,39 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand/v2"
+	"os"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 var ctx = context.Background()
+
+const (
+	defaultCacheTTL = 24 * time.Hour
+	cacheTTLJitter  = 0.10 // spread expiry by ±10% so popular links don't all expire together
+)
+
+var cacheTTL = defaultCacheTTL
+
+func initCacheTTL() error {
+	raw := os.Getenv("CacheTTL")
+	if raw == "" {
+		return nil
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil || d < time.Minute {
+		return fmt.Errorf("invalid CacheTTL %q: use a duration of at least 1m, for example 24h", raw)
+	}
+	cacheTTL = d
+	return nil
+}
+
+func ttlWithJitter() time.Duration {
+	spread := float64(cacheTTL) * cacheTTLJitter * (rand.Float64()*2 - 1)
+	return cacheTTL + time.Duration(spread)
+}
 
 func setOneToCache(key string, value *URL) error {
 
@@ -18,8 +46,7 @@ func setOneToCache(key string, value *URL) error {
 		return fmt.Errorf("cache marshal %q: %w", key, err)
 	}
 
-	err = redisDB.Set(ctx, key, data, 0).Err()
-	if err != nil {
+	if err := redisDB.Set(ctx, key, data, ttlWithJitter()).Err(); err != nil {
 		return fmt.Errorf("cache set %q: %w", key, err)
 	}
 
