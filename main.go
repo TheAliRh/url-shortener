@@ -38,6 +38,10 @@ func main() {
 	}
 	defer closeCache()
 
+	if err := initCacheTTL(); err != nil {
+		log.Fatalf("[FATAL] cache: %v", err)
+	}
+
 	if err := initURLSafety(); err != nil {
 		log.Fatalf("[FATAL] url safety: %v", err)
 	}
@@ -59,7 +63,9 @@ func main() {
 		router.GET("/:code", rateLimit(ruleRedirectIP, byIP), redirectHandler)
 	}
 
-	api := router.Group("/api", bodyLimit(maxAPIBody), rateLimit(ruleAPIIP, byIP))
+	router.Use(securityHeaders())
+
+	api := router.Group("/api", noStore(), bodyLimit(maxAPIBody), rateLimit(ruleAPIIP, byIP))
 
 	auth := api.Group("/auth", bodyLimit(maxAPIBody))
 	{
