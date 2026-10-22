@@ -37,6 +37,8 @@ func redirectHandler(c *gin.Context) {
 	}
 
 	if isBlockedDestination(originalURL) {
+		c.Header("Content-Security-Policy", htmlPageCSP)
+		c.Header("Cache-Control", "no-store")
 		c.Data(http.StatusGone, "text/html; charset=utf-8", []byte(blockedPage))
 		return
 	}
